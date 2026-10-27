@@ -1,0 +1,91 @@
+services:
+  router:
+    image: ubuntu:latest
+    container_name: central_router
+    tty: true
+    cap_add:
+      - NET_ADMIN
+    networks:
+      client_net:
+        ipv4_address: 192.168.144.254
+      service_net:
+        ipv4_address: 192.168.145.254
+      data_net:
+        ipv4_address: 192.168.146.254
+    command: >
+      bash -c "
+      export DEBIAN_FRONTEND=noninteractive &&
+      apt-get update && apt-get install -y iproute2 iputils-ping iptables &&
+      sysctl -w net.ipv4.ip_forward=1 &&
+      tail -f /dev/null"
+
+  game_client:
+    image: ubuntu:latest
+    container_name: game_client
+    tty: true
+    cap_add:
+      - NET_ADMIN
+    networks:
+      client_net:
+        ipv4_address: 192.168.144.10
+    depends_on:
+      - router
+    command: >
+      bash -c "
+      export DEBIAN_FRONTEND=noninteractive &&
+      apt-get update && apt-get install -y iproute2 iputils-ping curl traceroute python3 python3-requests &&
+      ip route del default &&
+      ip route add default via 192.168.144.254 &&
+      tail -f /dev/null"
+
+  api_server:
+    image: ubuntu:latest
+    container_name: api_server
+    tty: true
+    cap_add:
+      - NET_ADMIN
+    networks:
+      service_net:
+        ipv4_address: 192.168.145.10
+    depends_on:
+      - router
+    command: >
+      bash -c "
+      export DEBIAN_FRONTEND=noninteractive &&
+      apt-get update && apt-get install -y iproute2 iputils-ping python3 python3-pip python3-fastapi python3-redis uvicorn &&
+      ip route del default &&
+      ip route add default via 192.168.145.254 &&
+      tail -f /dev/null"
+
+  nosql_db:
+    image: ubuntu:latest
+    container_name: nosql_db
+    tty: true
+    cap_add:
+      - NET_ADMIN
+    networks:
+      data_net:
+        ipv4_address: 192.168.146.10
+    depends_on:
+      - router
+    command: >
+      bash -c "
+      export DEBIAN_FRONTEND=noninteractive &&
+      apt-get update && apt-get install -y iproute2 iputils-ping redis-server &&
+      ip route del default &&
+      ip route add default via 192.168.146.254 &&
+      redis-server --protected-mode no --bind 0.0.0.0 --daemonize no"
+      
+networks:
+  client_net:
+    ipam:
+      config:
+        - subnet: 192.168.144.0/24
+  service_net:
+    ipam:
+      config:
+        - subnet: 192.168.145.0/24
+  data_net:
+    ipam:
+      config:
+        - subnet: 192.168.146.0/24
