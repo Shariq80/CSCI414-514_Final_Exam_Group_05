@@ -19,7 +19,7 @@ fi
 echo "API is unavailable."
 echo "[2] Attempting to restart Uvicorn..."
 
-docker exec "$API_CONTAINER" bash -c "pkill -f 'uvicorn main:app' || true"
+docker exec "$API_CONTAINER" pkill -x uvicorn || true
 
 sleep 2
 
