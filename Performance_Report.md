@@ -93,3 +93,5 @@ Screenshots are saved in the `Test_Evidence` folder:
 - `Performance_Baseline.png`
 - `Performance_Network_Impairment.png`
 - `Client_Routing_Verification.png`
+- `Client_API_Health_Check.png`
+- `API_Error_Handling_404.png`
